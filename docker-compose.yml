@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  php-fpm:
+    container_name: phpdock-php-fpm-latest
+    image: ${COMPOSE_PROJECT_NAME}:${PHP_VERSION}
+    build:
+      context: .
+      target: php-dev
+      args:
+        - PHP_VERSION=${PHP_VERSION}
+        - PHP_EXTENSIONS=${PHP_EXTENSIONS}
+        # To authenticate to private registry either use username / password, or Oauth key/secret / etc
+        # Please add Composer Auth JSON Object
+        - COMPOSER_AUTH=${COMPOSER_AUTH}
+    environment:
+      - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST}
+    volumes:
+      - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
+
+  nginx:
+    build:
+      context: .
+      target: nginx-dev
+      args:
+        - NGINX_VERSION=${NGINX_VERSION}
+    environment:
+      - NGINX_SERVER_TOKENS=on
+      - SELF_SIGNED_SSL=1
+      - PHP_FPM_HOST=${PHP_FPM_HOST}
+      - PHP_FPM_PORT=${PHP_FPM_PORT}
+    volumes:
+      - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
+      - ${NGINX_SITES_PATH}:/etc/nginx/sites-available
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - php-fpm
+
+  mariadb:
+    image: mariadb:${DB_VERSION}
+    environment:
+      - MARIADB_DATABASE=${DB_DATABASE}
+      - MARIADB_USER=${DB_USER}
+      - MARIADB_PASSWORD=${DB_PASSWORD}
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+    volumes:
+      - ${DB_CNF_FILE}:/etc/mysql/my.cnf
+      - ${DATA_PATH_HOST}/mariadb:/var/lib/mysql
+      - ${DB_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"

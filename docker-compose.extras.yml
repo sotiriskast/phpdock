@@ -1,0 +1,129 @@
+version: '3.8'
+
+#this compose file containes extra images and should be combined with docker-compose.yml or docker-compose.prod.yml
+services:
+  redis:
+    image: redis:latest
+    volumes:
+      - ${DATA_PATH_HOST}/redis:/data
+    ports:
+      - "6379:6379"
+
+  memcached:
+    image: memcached:latest
+    volumes:
+      - ${DATA_PATH_HOST}/memcached:/var/lib/memcached
+    ports:
+      - "11211:11211"
+    depends_on:
+      - php-fpm
+
+  tor:
+    image: dperson/torproxy
+    ports:
+      - 8118:8118
+      - 9050:9050
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.6
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9201:9200"
+      - "9301:9300"
+
+
+  elasticsearch8:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.0
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+
+  chromium:
+    image: montferret/chromium
+    ports:
+      - "9222:9222"
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    privileged: true
+    ports:
+      - 8080:8080
+      - 50000:50000
+    volumes:
+      - ${DATA_PATH_HOST}/jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+
+
+  mailhog:
+    image: mailhog:local
+    build: https://github.com/mailhog/MailHog.git
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+
+  postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - ${DATA_PATH_HOST}/postgres:/var/lib/postgresql/data
+
+  php-fpm7.3:
+    build:
+      context: .
+      target: php-dev
+      args:
+        - PHP_VERSION=7.3
+        - PHP_EXTENSIONS=${PHP_EXTENSIONS}
+        - COMPOSER_AUTH=${COMPOSER_AUTH}
+    environment:
+      - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST}
+    volumes:
+      - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
+
+  php-fpm7.4:
+    build:
+      context: .
+      target: php-dev
+      args:
+        - PHP_VERSION=7.4
+        - PHP_EXTENSIONS=${PHP_EXTENSIONS}
+        - COMPOSER_AUTH=${COMPOSER_AUTH}
+    environment:
+      - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST}
+    volumes:
+      - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
+
+  php-fpm8.0:
+    build:
+      context: .
+      target: php-dev
+      args:
+        - PHP_VERSION=8.0
+        - PHP_EXTENSIONS=${PHP_EXTENSIONS}
+        - COMPOSER_AUTH=${COMPOSER_AUTH}
+    environment:
+      - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST}
+    volumes:
+      - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
