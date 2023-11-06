@@ -16,7 +16,7 @@ FROM composer:${COMPOSER_VERSION} as composer
 FROM php:${PHP_VERSION}-fpm-alpine AS base
 
 # Maintainer label
-LABEL maintainer="panakourweb@gmail.com"
+LABEL maintainer="soteris100@gmail.com"
 
 # pipefail. add the ability to pipe the output of a fail command. https://github.com/hadolint/hadolint/wiki/DL4006
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
