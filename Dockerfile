@@ -1,8 +1,7 @@
 # ARGs for versions
-ARG PHP_VERSION="8.3"
+ARG PHP_VERSION="8.4"
 ARG COMPOSER_VERSION=2.8
-ARG COMPOSER_AUTH
-ARG NGINX_VERSION=1.25
+ARG NGINX_VERSION=1.27
 ARG APP_CODE_PATH="."
 
 # -------------------------------------------------- Composer Image ----------------------------------------------------
@@ -14,7 +13,7 @@ FROM composer:${COMPOSER_VERSION} as composer
 FROM php:${PHP_VERSION}-fpm-alpine AS base
 
 # Maintainer label
-LABEL maintainer="panakourweb@gmail.com"
+LABEL maintainer="soteris100@gmail.com"
 
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
@@ -37,17 +36,16 @@ RUN deluser --remove-home www-data && adduser -u1000 -D www-data && rm -rf /var/
     mkdir -p /var/www/.composer /webdata && chown -R www-data:www-data /webdata /var/www/.composer
 
 # ------------------------------------------------ PHP Configuration ---------------------------------------------------
-RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
-
-COPY phpdock/php/base-php.ini $PHP_INI_DIR/conf.d
+RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
+COPY php/base-php.ini $PHP_INI_DIR/conf.d
 
 # ---------------------------------------------- PHP FPM Configuration -------------------------------------------------
-COPY phpdock/php/fpm.conf /usr/local/etc/php-fpm.d/
+COPY php/fpm.conf /usr/local/etc/php-fpm.d/
 
 # --------------------------------------------------- Scripts ----------------------------------------------------------
-COPY phpdock/php/scripts/*-base \
-     phpdock/php/scripts/php-fpm-healthcheck \
-     phpdock/php/scripts/command-loop \
+COPY php/scripts/*-base \
+     php/scripts/php-fpm-healthcheck \
+     php/scripts/command-loop \
      /usr/local/bin/
 
 RUN chmod +x /usr/local/bin/*-base /usr/local/bin/php-fpm-healthcheck /usr/local/bin/command-loop
@@ -60,8 +58,8 @@ WORKDIR /webdata
 USER www-data
 
 # Common PHP Frameworks Env Variables
-ENV APP_ENV prod
-ENV APP_DEBUG 0
+ENV APP_ENV dev
+ENV APP_DEBUG 1
 
 RUN php-fpm -t
 
@@ -72,50 +70,11 @@ HEALTHCHECK CMD ["php-fpm-healthcheck"]
 ENTRYPOINT ["entrypoint-base"]
 CMD ["php-fpm"]
 
-## ======================================================================================================================
-## ==============================================  PRODUCTION IMAGE  ====================================================
-## ======================================================================================================================
-
-FROM composer as vendor
-
-ARG PHP_VERSION
-ARG COMPOSER_AUTH
-ARG APP_CODE_PATH
-ENV COMPOSER_AUTH $COMPOSER_AUTH
-
-WORKDIR /webdata
-
-COPY $APP_CODE_PATH/composer.json composer.json
-COPY $APP_CODE_PATH/composer.lock composer.lock
-
-RUN composer config platform.php ${PHP_VERSION}
-RUN composer install -n --no-progress --ignore-platform-reqs --no-dev --prefer-dist --no-scripts --no-autoloader
-
-FROM base AS php-prod
-
-ARG APP_CODE_PATH
-USER root
-
-COPY phpdock/php/scripts/*-prod /usr/local/bin/
-RUN chmod +x /usr/local/bin/*-prod
-COPY phpdock/php/prod-* $PHP_INI_DIR/conf.d/
-
-USER www-data
-COPY --chown=www-data:www-data --from=vendor /webdata/vendor /webdata/vendor
-COPY --chown=www-data:www-data $APP_CODE_PATH .
-
-RUN post-build-prod
-ENTRYPOINT ["entrypoint-prod"]
-CMD ["php-fpm"]
-
-## ======================================================================================================================
-## ==============================================  DEVELOPMENT IMAGE  ===================================================
-## ======================================================================================================================
+# ======================================================================================================================
+# ==============================================  DEVELOPMENT IMAGE  ===================================================
+# ======================================================================================================================
 
 FROM base as php-dev
-
-ENV APP_ENV dev
-ENV APP_DEBUG 1
 
 USER root
 
@@ -128,30 +87,29 @@ ENV XDEBUG_IDE_KEY=myide
 ENV PHP_IDE_CONFIG="serverName=${XDEBUG_IDE_KEY}"
 RUN install-php-extensions xdebug
 
-COPY phpdock/php/scripts/*-dev /usr/local/bin/
+COPY php/scripts/*-dev /usr/local/bin/
 RUN chmod +x /usr/local/bin/*-dev
-RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
-COPY phpdock/php/dev-* $PHP_INI_DIR/conf.d/
+COPY php/dev-* $PHP_INI_DIR/conf.d/
 
 USER www-data
 ENTRYPOINT ["entrypoint-dev"]
 CMD ["php-fpm"]
 
 # ======================================================================================================================
+# ================================================ --- NGINX --- =======================================================
 # ======================================================================================================================
-#                                                  --- NGINX ---
-# ======================================================================================================================
-# ======================================================================================================================
-FROM nginx:${NGINX_VERSION}-alpine AS nginx
+FROM nginx:${NGINX_VERSION}-alpine AS nginx-dev
 
+EXPOSE 80 443
 RUN rm -rf /var/www/* /etc/nginx/conf.d/* && adduser -u 1000 -D -S -G www-data www-data
-COPY phpdock/nginx/nginx-* /usr/local/bin/
-COPY phpdock/nginx/ /etc/nginx/
+COPY nginx/nginx-* /usr/local/bin/
+COPY nginx/ /etc/nginx/
 RUN chown -R www-data /etc/nginx/ && chmod +x /usr/local/bin/nginx-*
 
 ENV PHP_FPM_HOST "localhost"
 ENV PHP_FPM_PORT "9000"
 ENV NGINX_LOG_FORMAT "json"
+ENV NGINX_LOG_FORMAT "combined"
 
 USER www-data
 
@@ -159,30 +117,5 @@ HEALTHCHECK CMD ["nginx-healthcheck"]
 
 ENTRYPOINT ["nginx-entrypoint"]
 
-# ======================================================================================================================
-#                                                 --- NGINX PROD ---
-# ======================================================================================================================
-FROM nginx AS nginx-prod
-
-EXPOSE 8080
-
-USER root
-
-RUN SECURITY_UPGRADES="curl"; \
-    apk add --no-cache --upgrade ${SECURITY_UPGRADES}
-
-USER www-data
-
-COPY --chown=www-data:www-data --from=php-prod /webdata/public /webdata/public
-
-# ======================================================================================================================
-#                                                 --- NGINX DEV ---
-# ======================================================================================================================
-FROM nginx AS nginx-dev
-
-EXPOSE 80 443
-
-ENV NGINX_LOG_FORMAT "combined"
-
-COPY --chown=www-data:www-data phpdock/nginx/dev/*.conf /etc/nginx/conf.d/
-COPY --chown=www-data:www-data phpdock/nginx/dev/certs/ /etc/nginx/certs/
+COPY --chown=www-data:www-data nginx/dev/*.conf /etc/nginx/conf.d/
+COPY --chown=www-data:www-data nginx/dev/certs/ /etc/nginx/certs/
