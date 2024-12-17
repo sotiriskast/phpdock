@@ -1,18 +1,14 @@
-version: '3.8'
-
 services:
   php-fpm:
     container_name: phpdock-php-fpm-latest
     image: ${COMPOSE_PROJECT_NAME}:${PHP_VERSION}
     build:
       context: .
-      target: php-dev
+      dockerfile: Dockerfile
       args:
         - PHP_VERSION=${PHP_VERSION}
         - PHP_EXTENSIONS=${PHP_EXTENSIONS}
-        # To authenticate to private registry either use username / password, or Oauth key/secret / etc
-        # Please add Composer Auth JSON Object
-        - COMPOSER_AUTH=${COMPOSER_AUTH}
+        - APP_CODE_PATH_CONTAINER=${APP_CODE_PATH_CONTAINER}
     environment:
       - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST}
     volumes:
@@ -21,17 +17,16 @@ services:
   nginx:
     build:
       context: .
-      target: nginx-dev
+      dockerfile: Dockerfile.nginx
       args:
         - NGINX_VERSION=${NGINX_VERSION}
     environment:
-      - NGINX_SERVER_TOKENS=on
+      - APP_CODE_PATH_CONTAINER=${APP_CODE_PATH_CONTAINER}
       - SELF_SIGNED_SSL=1
       - PHP_FPM_HOST=${PHP_FPM_HOST}
       - PHP_FPM_PORT=${PHP_FPM_PORT}
     volumes:
       - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
-      - ${NGINX_SITES_PATH}:/etc/nginx/sites-available
     ports:
       - "80:80"
       - "443:443"
