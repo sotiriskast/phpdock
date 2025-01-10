@@ -97,6 +97,7 @@ services:
         - COMPOSER_AUTH=${COMPOSER_AUTH}
     environment:
       - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST}
+      - APP_ENV=local
     volumes:
       - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
 
@@ -110,6 +111,7 @@ services:
         - COMPOSER_AUTH=${COMPOSER_AUTH}
     environment:
       - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST}
+      - APP_ENV=local
     volumes:
       - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
 
@@ -123,6 +125,7 @@ services:
         - COMPOSER_AUTH=${COMPOSER_AUTH}
     environment:
       - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST}
+      - APP_ENV=local
     volumes:
       - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
 
@@ -136,6 +139,7 @@ services:
         - COMPOSER_AUTH=${COMPOSER_AUTH}
     environment:
       - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST}
+      - APP_ENV=local
     volumes:
       - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
 
@@ -149,6 +153,7 @@ services:
         - COMPOSER_AUTH=${COMPOSER_AUTH}
     environment:
       - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST}
+      - APP_ENV=local
     volumes:
       - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
 
@@ -162,6 +167,7 @@ services:
         - COMPOSER_AUTH=${COMPOSER_AUTH}
     environment:
       - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST}
+      - APP_ENV=local
     volumes:
       - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
   php-fpm8.4:
@@ -174,5 +180,6 @@ services:
         - COMPOSER_AUTH=${COMPOSER_AUTH}
     environment:
       - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST}
+      - APP_ENV=local
     volumes:
       - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
