@@ -14,7 +14,7 @@ FROM composer:${COMPOSER_VERSION} as composer
 FROM php:${PHP_VERSION}-fpm-alpine AS base
 
 # Maintainer label
-LABEL maintainer="panakourweb@gmail.com"
+LABEL maintainer="soteris100@gmail.com"
 
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 

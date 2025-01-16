@@ -15,13 +15,6 @@ services:
       - ${DATA_PATH_HOST}/memcached:/var/lib/memcached
     ports:
       - "11211:11211"
-
-  tor:
-    image: dperson/torproxy
-    ports:
-      - 8118:8118
-      - 9050:9050
-
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.15
     environment:
