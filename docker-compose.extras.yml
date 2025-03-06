@@ -1,5 +1,3 @@
-version: '3.8'
-
 #this compose file containes extra images and should be combined with docker-compose.yml or docker-compose.prod.yml
 services:
   redis:
@@ -79,6 +77,44 @@ services:
       - "5432:5432"
     volumes:
       - ${DATA_PATH_HOST}/postgres:/var/lib/postgresql/data
+
+  swagger-editor:
+    build:
+      context: ./phpdock/swagger
+      dockerfile: swagger-editor.Dockerfile
+    ports:
+      - "8085:8080"
+    volumes:
+      - ${APP_CODE_PATH_HOST}/api-specs:/swagger-editor
+    restart: unless-stopped
+
+  swagger-ui:
+    build:
+      context: ./phpdock/swagger
+      dockerfile: swagger-ui.Dockerfile
+    ports:
+      - "8086:8080"
+    volumes:
+      - ${APP_CODE_PATH_HOST}/api-specs:/usr/share/nginx/html/api-specs
+    environment:
+      # Configure multiple URLs to select from
+      URLS: "[{url: '/api-specs/openapi.yaml', name: 'Main API'}, {url: '/api-specs/users-api.yaml', name: 'Users API'}, {url: '/api-specs/products-api.yaml', name: 'Products API'}]"
+      # Set the primary/default selection
+      URLS_PRIMARY_NAME: "Main API"
+      # Set UI configuration
+      DISPLAY_OPERATION_ID: "true"
+    restart: unless-stopped
+
+  swagger-browser:
+    build:
+      context: ./phpdock/swagger
+      dockerfile: browser.Dockerfile
+    ports:
+      - "8087:80"
+    volumes:
+      - ${APP_CODE_PATH_HOST}/api-specs:/api-specs
+    restart: unless-stopped
+
   grafana:
     image: grafana/grafana-oss:latest
     user: root

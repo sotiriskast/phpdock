@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   php-fpm:
     container_name: phpdock-php-fpm-latest

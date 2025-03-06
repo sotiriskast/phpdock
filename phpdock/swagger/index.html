@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Swagger API Specifications</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 3px;
+        }
+        a {
+            text-decoration: none;
+            color: #0275d8;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .error {
+            color: #d9534f;
+            padding: 10px;
+            background-color: #f8d7da;
+            border-radius: 3px;
+        }
+        .refresh {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 3px;
+            text-align: center;
+        }
+        button {
+            background-color: #0275d8;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #025aa5;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>API Specifications</h1>
+    <div id="file-list">Loading...</div>
+    <div class="refresh">
+        <button onclick="loadFileList()">Refresh List</button>
+    </div>
+</div>
+
+<script>
+    function loadFileList() {
+        document.getElementById('file-list').innerHTML = 'Loading...';
+
+        fetch('/file-list.json')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(files => {
+                const fileList = document.getElementById('file-list');
+
+                if (files.length === 0) {
+                    fileList.innerHTML = '<p>No API specification files found.</p>';
+                    return;
+                }
+
+                let html = '<ul>';
+                files.forEach(file => {
+                    html += `<li><a href="http://localhost:8086/?url=/api-specs/${file}" target="_blank">${file}</a></li>`;
+                });
+                html += '</ul>';
+                fileList.innerHTML = html;
+            })
+            .catch(error => {
+                document.getElementById('file-list').innerHTML =
+                    `<div class="error">Error loading file list: ${error.message}</div>`;
+            });
+    }
+
+    // Load the file list when the page loads
+    window.onload = loadFileList;
+</script>
+</body>
+</html>
