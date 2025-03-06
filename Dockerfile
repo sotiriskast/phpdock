@@ -1,5 +1,5 @@
 # ARGs for versions
-ARG PHP_VERSION="8.3"
+ARG PHP_VERSION="8.4"
 ARG COMPOSER_VERSION=2
 ARG COMPOSER_AUTH
 ARG NGINX_VERSION=1.25
@@ -127,6 +127,13 @@ ENV XDEBUG_CLIENT_HOST=172.17.0.1
 ENV XDEBUG_IDE_KEY=myide
 ENV PHP_IDE_CONFIG="serverName=${XDEBUG_IDE_KEY}"
 RUN install-php-extensions xdebug
+
+# Install Laravel installer with all dependencies
+RUN mkdir -p /opt/laravel-installer && \
+    cd /opt/laravel-installer && \
+    echo '{"require": {"laravel/installer": "^5.1"}}' > composer.json && \
+    composer install && \
+    ln -s /opt/laravel-installer/vendor/bin/laravel /usr/local/bin/laravel
 
 COPY phpdock/php/scripts/*-dev /usr/local/bin/
 RUN chmod +x /usr/local/bin/*-dev
