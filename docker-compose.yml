@@ -47,5 +47,12 @@ services:
       - ${DB_CNF_FILE}:/etc/mysql/my.cnf
       - ${DATA_PATH_HOST}/mariadb:/var/lib/mysql
       - ${DB_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d
+    deploy:
+      resources:
+        limits:
+          memory: 10G
+        reservations:
+          memory: 8G
+
     ports:
       - "3306:3306"
