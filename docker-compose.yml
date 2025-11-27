@@ -8,16 +8,18 @@ services:
       args:
         - PHP_VERSION=${PHP_VERSION}
         - PHP_EXTENSIONS=${PHP_EXTENSIONS}
-        # To authenticate to private registry either use username / password, or Oauth key/secret / etc
-        # Please add Composer Auth JSON Object
         - COMPOSER_AUTH=${COMPOSER_AUTH}
     environment:
       - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST}
       - APP_ENV=local
     volumes:
       - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
 
   nginx:
+    container_name: phpdock-nginx-1
     build:
       context: .
       target: nginx-dev
@@ -36,6 +38,8 @@ services:
       - "443:443"
     depends_on:
       - php-fpm
+    restart: unless-stopped
+
   mariadb:
     image: mariadb:${DB_VERSION}
     environment:
@@ -52,7 +56,22 @@ services:
         limits:
           memory: 10G
         reservations:
-          memory: 8G
-
+          memory: 1G
     ports:
       - "3306:3306"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local

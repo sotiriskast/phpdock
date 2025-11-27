@@ -29,7 +29,7 @@ RUN chmod +x /usr/local/bin/install-php-extensions && \
 
 # ------------------------------------------------- Install Node.js and npm --------------------------------------------
 RUN apk add --no-cache \
-    --repository=http://dl-cdn.alpinelinux.org/alpine/v3.20/community \
+    --repository=http://dl-cdn.alpinelinux.org/alpine/v3.22/community \
     nodejs npm
 
 # ------------------------------------------------- Permissions --------------------------------------------------------
