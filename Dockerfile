@@ -1,5 +1,5 @@
 # ARGs for versions
-ARG PHP_VERSION="8.4"
+ARG PHP_VERSION="8.5"
 ARG COMPOSER_VERSION=2
 ARG COMPOSER_AUTH
 ARG NGINX_VERSION=1.25
@@ -22,15 +22,16 @@ SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN apk add --no-cache tini zip fcgi
 
 # ---------------------------------------- Install / Enable PHP Extensions ---------------------------------------------
+# Note: As of PHP 8.5, PECL is deprecated in favor of PIE (PHP Installer for Extensions)
+# The install-php-extensions script handles this transition automatically
+# See: https://github.com/php/pie for more information about PIE
 ARG PHP_EXTENSIONS
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 RUN chmod +x /usr/local/bin/install-php-extensions && \
     install-php-extensions ${PHP_EXTENSIONS}
 
 # ------------------------------------------------- Install Node.js and npm --------------------------------------------
-RUN apk add --no-cache \
-    --repository=http://dl-cdn.alpinelinux.org/alpine/v3.22/community \
-    nodejs npm
+RUN apk add --no-cache nodejs npm
 
 # ------------------------------------------------- Permissions --------------------------------------------------------
 RUN deluser --remove-home www-data && adduser -u1000 -D www-data && rm -rf /var/www /usr/local/etc/php-fpm.d/* && \
@@ -123,15 +124,17 @@ USER root
 RUN apk add git openssh vim github-cli;
 
 # Install Xdebug
+# Note: Ensure xdebug is compatible with PHP 8.5 - check https://xdebug.org/docs/compat
 ENV XDEBUG_CLIENT_HOST=172.17.0.1
 ENV XDEBUG_IDE_KEY=myide
 ENV PHP_IDE_CONFIG="serverName=${XDEBUG_IDE_KEY}"
 RUN install-php-extensions xdebug
 
+
 # Install Laravel installer with all dependencies
 #RUN mkdir -p /opt/laravel-installer && \
 #    cd /opt/laravel-installer && \
-#    echo '{"require": {"laravel/installer": "^5.1"}}' > composer.json && \
+#    echo '{"require": {"laravel/installer": "^5.2"}}' > composer.json && \
 #    composer install && \
 #    ln -s /opt/laravel-installer/vendor/bin/laravel /usr/local/bin/laravel
 
