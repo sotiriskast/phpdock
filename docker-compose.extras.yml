@@ -26,7 +26,6 @@ services:
       - "9201:9200"
       - "9301:9300"
 
-
   elasticsearch8:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
     environment:
@@ -36,6 +35,18 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    environment:
+      - MEILI_ENV=development
+      - MEILI_MASTER_KEY=root  # Change this for production
+      - MEILI_NO_ANALYTICS=true
+    volumes:
+      - ${DATA_PATH_HOST}/meilisearch:/meili_data
+    ports:
+      - "7700:7700"
+    restart: unless-stopped
+
 
   chromium:
     image: montferret/chromium
@@ -208,7 +219,7 @@ services:
       target: php-dev
       args:
         - PHP_VERSION=8.4
-        - PHP_EXTENSIONS=${PHP_EXTENSIONS}
+        - PHP_EXTENSIONS=memcached imagick intl pdo_mysql pdo_pgsql pdo_sqlsrv sqlsrv opcache pcntl bcmath zip gd exif apcu
         - COMPOSER_AUTH=${COMPOSER_AUTH}
     environment:
       - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST}
@@ -222,7 +233,7 @@ services:
       target: php-dev
       args:
         - PHP_VERSION=8.5
-        - PHP_EXTENSIONS=${PHP_EXTENSIONS}
+        - PHP_EXTENSIONS=${PHP_EXTENSIONS} pdo_sqlsrv sqlsrv
         - COMPOSER_AUTH=${COMPOSER_AUTH}
     environment:
       - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST}
